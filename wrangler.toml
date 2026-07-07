@@ -1,5 +1,0 @@
-# Cloudflare Pages configuration
-# https://developers.cloudflare.com/pages/functions/wrangler-configuration/
-name = "bek-kurbonov"
-pages_build_output_dir = "public"
-compatibility_date = "2025-01-01"
