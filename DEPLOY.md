@@ -45,4 +45,3 @@ npx wrangler pages deploy public --project-name bek-kurbonov
 ```bash
 hugo server
 ```
-
