@@ -273,11 +273,21 @@ Don't use this pattern when:
 - Your team doesn't want to maintain multiple languages
 - Data must be absolutely real-time (can't tolerate 2-3 minute staleness)
 
+## The likely cause, in hindsight
+
+I never caught the leak with a profiler while it was happening, but I'm now fairly confident about the mechanism.
+
+Python doesn't reliably return freed memory to the operating system. When objects are freed, the memory goes back to Python's allocator and the underlying C allocator—not to the OS—so the process's resident memory (RSS) stays at its high-water mark. On top of that, a workload that repeatedly allocates large, differently-sized DataFrame buffers fragments the heap: the freed regions are still there, but they're scattered, so they can't always satisfy the next big contiguous allocation. When they can't, the allocator asks the OS for more. Run after run, peak RSS ratchets upward and never comes back down—until it crosses the pod's 3 GB limit and Kubernetes OOM-kills the process.
+
+That also explains the staging-versus-production gap: under light load, with smaller and less frequent allocations, the ratchet was slow enough to stay under the limit. Under production load it wasn't. It's consistent with the problem showing up under both Pandas and Polars, too—the culprit isn't the DataFrame library, it's a long-lived process doing cyclical heavy allocation.
+
+This is exactly the failure mode that short-lived processes neutralize. The heavy allocation now happens in a worker that exits after every run, and process exit hands all of that memory straight back to the OS. Nothing accumulates, so there's nothing to grow.
+
+Worth calling out: the fix came from the short-lived worker, not from Go specifically. A thin Python server calling a disposable Python worker—python + python instead of go + python—would have addressed the core of the problem the same way, since the heavy per-run allocation is what gets isolated and reclaimed. A long-lived Python HTTP server would still be exposed to slow drift under constant traffic, just without the big allocations feeding it, so that split would have taken care of most of the growth on its own. Go earned its place for the rest: millisecond startup, ~40 µs in-memory serving, easy concurrency, and tighter memory behavior in the process that never dies.
+
 ## Conclusion
 
-I never definitively found what caused the memory growth in the original Python architecture. Maybe it was the ProcessPoolExecutor's persistent worker. Maybe it was Python's memory allocator. Maybe it was something I never even considered.
-
-But I didn't need to know. By changing the architecture to use short-lived processes, the problem simply stopped happening.
+I couldn't pin the leak down with a profiler while production was burning, so I designed around it—and landed on an architecture where the problem can't occur. In hindsight the cause was almost certainly Python holding onto fragmented memory it never returned to the OS; short-lived worker processes make that impossible to accumulate.
 
 Sometimes the best solution isn't fixing the bug—it's designing a system where the bug can't exist.
 
