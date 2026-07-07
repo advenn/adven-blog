@@ -1,4 +1,10 @@
-baseURL: https://bek-kurbonov.com/
+# baseURL is root-relative + relativeURLs so links follow whatever domain
+# actually serves the site (pages.dev, preview, or the custom domain once live).
+# When bek-kurbonov.com is active, set baseURL back to https://bek-kurbonov.com/
+# and remove relativeURLs for proper absolute canonical/sitemap/RSS URLs.
+baseURL: /
+relativeURLs: true
+canonifyURLs: false
 languageCode: en-us
 title: Asadbek Kurbonov
 pagination:

@@ -34,7 +34,20 @@ works, but pinning keeps future builds reproducible.
 ## Custom domain
 
 Project → **Custom domains** → add `bek-kurbonov.com` (and `www.` if wanted).
-`baseURL` in `hugo.yaml` is already `https://bek-kurbonov.com/`.
+
+Until the custom domain is active, `hugo.yaml` uses `baseURL: /` with
+`relativeURLs: true` so links follow whatever domain serves the site
+(`*.pages.dev`, preview, or the custom domain). **Once `bek-kurbonov.com` is
+live**, switch back to absolute URLs for correct canonical/sitemap/RSS:
+
+```yaml
+baseURL: https://bek-kurbonov.com/
+# remove relativeURLs and canonifyURLs lines
+```
+
+Keep the build command as plain `hugo --gc --minify` — do **not** add
+`-b $CF_PAGES_URL`, which would re-inject an absolute domain and break the
+relative links.
 
 ## Manual / local deploy (fallback)
 
