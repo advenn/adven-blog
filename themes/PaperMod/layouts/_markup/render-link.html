@@ -1,0 +1,10 @@
+{{- $u := urls.Parse .Destination -}}
+{{- $href := $u.String -}}
+{{- if and (not $u.IsAbs) (hasPrefix $u.Path "/") -}}
+  {{- $basePath := strings.TrimSuffix "/" (urls.Parse site.BaseURL).Path -}}
+  {{- $href = printf "%s%s" $basePath $u.Path -}}
+  {{- with $u.RawQuery -}}{{- $href = printf "%s?%s" $href . -}}{{- end -}}
+  {{- with $u.Fragment -}}{{- $href = printf "%s#%s" $href . -}}{{- end -}}
+{{- end -}}
+<a href="{{ $href | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ range $k, $v := .Attributes }}{{ printf " %s=%q" $k $v | safeHTMLAttr }}{{ end }}>{{ .Text | safeHTML }}</a>
+{{- /**/ -}}

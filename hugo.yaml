@@ -1,0 +1,14 @@
+baseURL: https://bek-kurbonov.com/
+languageCode: en-us
+title: Asadbek Kurbonov
+pagination:
+  pagerSize: 10
+caches:
+  images:
+    dir: :cacheDir/images
+
+theme: [ "PaperMod" ]
+
+params:
+  ShowReadingTime: true
+  ShowShareButtons: true
