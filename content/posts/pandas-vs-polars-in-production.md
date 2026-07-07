@@ -16,7 +16,7 @@ The application was a data aggregation service running as a Kubernetes pod with 
 - **Operations**: Multiple database calls, API requests, DataFrame merges, arithmetic operations (additions, multiplications), and group-by aggregations
 - **Web server**: FastAPI with Uvicorn handling production traffic
 
-All operations were properly vectorized-no row-by-row iteration. The pipeline combined data from various sources into a single DataFrame, transformed it, and output the results.
+All operations were properly vectorized — no row-by-row iteration. The pipeline combined data from various sources into a single DataFrame, transformed it, and output the results.
 
 ## The Performance Problem
 
@@ -58,7 +58,7 @@ df = df.with_columns(
 )
 ```
 
-The expression system took getting used to, but I found it more readable once I understood the pattern. Expressions are also what enable Polars' query optimizer to work its magic.
+The expression system took getting used to, but I found it more readable once I understood the pattern. Expressions are also what allow Polars' query optimizer to reorder and prune work before execution.
 
 **Migration Strategy**
 

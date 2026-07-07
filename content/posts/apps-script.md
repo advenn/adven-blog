@@ -1,31 +1,46 @@
 ---
 date: '2025-07-22T22:39:19+05:00'
 draft: false
-title: 'Apps Script'
-tags: ["apps-script", "automation"]
+title: 'Automating Business Reports with Google Apps Script and Telegram'
+tags: ["apps-script", "automation", "telegram-bot"]
 ---
 
-## Beginning
-I mainly started freelancing from 2024. At that time I had a client who had accounting/consulting firm, they needed a telegram bot to create template word contracts.
-They said they had started doing it but didn't have time to finish it themselves. I saw their code, it was on apps script. At that time I first came across with apps script. I made the telegram with aiogram/python. 
-btw, I used encoding files with base64, docxtpl to render docx files from template.
+Google Apps Script is easy to dismiss as a toy. Over two freelance projects it turned out to be a genuinely capable serverless platform for automation work built around Google Sheets and Telegram. This post covers the second of those projects — a reporting system for a US-market logistics business — and how I got there.
 
-## Fully employment of Apps Script platform lately
-2 weeks ago when I finished one of my freelance project with logistics company, my university mate, who runs a business for american market, asked automation of their reports.
-I learnt how they do their business, the main business messages were run on messenger, on groups. So the task was to use telegram bot to carry data. 
-I remembered about apps script, I still has access to that client scripts, researched how they did their telegram automation on apps script, besides that I employed, of course, LLMs.
-Learnt how telegram bot can be run on apps script, and started the work. I set up webhook handler, formed a format to send message to database through telegram bot. 
-I chose google sheets as database:
-* it is accessible to customers without any additional tools.
-* it is easy to manipulate those data
-* and mainly it is free)
+## First encounter
 
-After the data source is fixed, I started working over the main thing on this job, the one page report sheet. Discussing with my mate we created a template, and I started working over the report.
-I must admit it was pain in the *ss. i use python and go on work, i little have experience with vanilla JS, which apps script uses.
-I had a lot of difficulties with timezones. I save them with uni timestamp and EST timezone date strings. On filtering i must parse the request on EST time, but it was difficult to understand how js parsing the time objects.
-After all I fixed all the problems, I used LLMs' help of course, mainly Claude, Gemini abd Deepseek.
-I handed the program for check, test. Customer asked additions, some format change, all of them were done and the last response to my work is: ![this](/photos/response-AK.png)
+I came across Apps Script on an earlier freelance job. A consulting firm needed a Telegram bot that generated templated Word contracts. They had started the work themselves in Apps Script but hadn't finished it, so I picked it up and rebuilt the bot in Python with [aiogram](https://docs.aiogram.dev/), rendering `.docx` files from templates using [docxtpl](https://docxtpl.readthedocs.io/) and passing files around as base64. Apps Script was only incidental to that project, but it was my first look at the platform.
 
-## Conclusion
-Apps Script is a low code, serverless platform by Google, and works great with Google workspace apps, like google sheets, docs, and others. It has all the APIs for them and integrated well.
-It has external HTTP interface that it can easily can receive GET/POST requests and can easily serve as a server via its UrlFetchApp interface.
+## The reporting project
+
+Later, a university contact who runs a business serving the US market asked me to automate their reporting. Their operation ran almost entirely through Telegram groups — orders and updates flowed as messages between team members. The goal was to capture that data automatically and turn it into a clean, single-page report.
+
+The design came down to two decisions: where the data would live, and how it would get there.
+
+### Google Sheets as the datastore
+
+I chose Google Sheets as the backing store rather than a traditional database. For this client it was the right trade-off:
+
+- **Accessible.** The client can open, read, and edit the data directly, with no extra tooling or credentials.
+- **Easy to manipulate.** Sheets is a comfortable interface for non-technical users and has a full scripting API.
+- **Free.** No hosting or database costs.
+
+### Capturing data through a Telegram bot
+
+A Telegram bot, running on Apps Script, served as the ingestion layer. I set up a webhook handler to receive updates, parsed the relevant messages from the groups, and wrote structured rows into the sheet. The technical details of the webhook and message handling are in a companion post: [Setting Up a Telegram Bot on Google Apps Script](/posts/setting-up-telegram-bot-on-apps-script/).
+
+With the data source in place, the bulk of the work was the report itself — a single-page summary sheet designed together with the client from a shared template.
+
+## What was hard
+
+The main friction was the runtime. Apps Script executes vanilla JavaScript, and I work in Python and Go day to day, so the language itself took some adjustment.
+
+Timezones were the real difficulty. I stored timestamps in UTC alongside EST display strings, and filtering the data meant parsing requests back on the EST boundary. Getting JavaScript's date parsing to behave consistently across that boundary took the most trial and error of the whole project. I leaned on LLMs — mainly Claude, with Gemini and DeepSeek — to work through the rougher parts.
+
+After delivery, the client requested a few additions and formatting changes, all of which were straightforward to fold in.
+
+## When Apps Script fits
+
+Apps Script is a low-code, serverless platform from Google that integrates tightly with Google Workspace — Sheets, Docs, and the rest — through first-class APIs. Its `UrlFetchApp` service makes outbound HTTP requests, and a deployed script can receive `GET`/`POST` requests, so it can act as a lightweight webhook server.
+
+That combination makes it a strong fit when your data already lives in Google Workspace, your users are non-technical, and your traffic is modest. It's not the tool for high-throughput services or anything needing fine-grained control over the HTTP layer — but for gluing Telegram to a spreadsheet and shipping a working automation quickly, it's hard to beat.

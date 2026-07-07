@@ -40,9 +40,9 @@ This command tells LibreOffice to:
 
 ## Important: LibreOffice Version Requirements
 
-**The `SinglePageSheets` parameter is only available in LibreOffice 20.x and later versions.** The `libreoffice-core` package from Ubuntu's apt repository installs version 7.x, which does **not** support this parameter.
+**`SinglePageSheets` requires a recent LibreOffice release.** The `libreoffice-core` package in Ubuntu's apt repository installs the 7.x series, which does **not** support this export option. In practice you need a current build (this project runs on the 24.x/25.x line).
 
-This means you need to manually install a newer version from the [Document Foundation's download page](https://download.documentfoundation.org/libreoffice/stable/).
+That means installing manually from the [Document Foundation's download page](https://download.documentfoundation.org/libreoffice/stable/) rather than relying on the distro package.
 
 ### Version Availability Issues
 
@@ -109,7 +109,7 @@ This installs all required dependencies:
 - Graphics libraries required by LibreOffice
 - Fonts for proper text rendering
 - Python 3 and pip
-- LibreOffice core package (as a base), it is necessary! the manual installation won't work without core package
+- LibreOffice core package as a base — this is required, as the manual installation won't work without it
 
 ```dockerfile
 # Copy and run the LibreOffice installation script
@@ -119,7 +119,7 @@ RUN chmod +x /tmp/install_libre.sh && /tmp/install_libre.sh && rm /tmp/install_l
 
 ### The Installation Script
 
-This is where the magic happens. The `install_libre.sh` script handles the version detection and installation:
+The `install_libre.sh` script handles version detection and installation:
 
 ```bash
 # Function to get latest LibreOffice version
