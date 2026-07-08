@@ -3,26 +3,27 @@ date: '2026-07-08T00:10:00+02:00'
 draft: false
 title: 'Why Nothing Has Replaced CPython: A 2026 Tour of Python Runtimes'
 tags: ['python', 'runtimes', 'pypy', 'cpython', 'jit', 'performance']
+ShowToc: true
+TocOpen: true
 ---
 
 Python is the most popular programming language in the world, and one of the slowest in wide production use. That combination should be catnip for anyone building a faster runtime — and for fifteen years, people have. There is a version of Python with a tracing JIT that is genuinely several times faster. There are compilers that turn it into native code. There are ports to the JVM and the .NET CLR. Big companies have funded forks. And after all of it, the interpreter almost everyone actually runs is still plain CPython.
 
 I wanted to understand why. So I pulled together the current runtime landscape, benchmarked the ones I could run on my own machine, checked the 2026 status of the rest against primary sources, and tried to work out the pattern: not "which is fastest," but why the fast ones keep bouncing off.
 
-A note on method. Every number I call *measured* below I ran myself on one Linux x86-64 machine, best of two or three runs: CPython 3.13.5, PyPy 7.3.23 (Python 3.11), and [pon](/posts/inside-pon-compiled-python/), a from-scratch native Python compiler I looked at recently. These are small microbenchmarks — they measure interpreter and call overhead, not real applications, which are usually bound by I/O or C libraries where these gaps shrink or vanish. Everything else (GraalPy, the compilers, the forks) I cite from project docs and 2025–2026 sources rather than pretending to benchmark it. Treat the ratios as directional.
+A note on method. Every number I call *measured* below I ran myself on one Linux x86-64 machine (8 cores), each runtime installed in its own isolated environment and run sequentially, best of several runs. That covers ten of them: CPython 3.13.5, CPython 3.14.4 and its free-threaded build, PyPy 7.3.23, [pon](/posts/inside-pon-compiled-python/), and — for the compiler tier — Numba, Cython, mypyc, Codon, and Travis Oliphant's brand-new post-py. These are small microbenchmarks: they measure interpreter, call, and loop overhead, not real applications, which are usually bound by I/O or C libraries where these gaps shrink or vanish. GraalPy and the abandoned forks I couldn't run cleanly here, so those I cite from project docs and 2025–2026 sources. Treat the ratios as directional, not as a leaderboard.
 
 ## Start with the benchmark
 
-Here is the uncomfortable fact that frames everything else. On identical, deterministic pure-Python programs — recursive `fib`, a float series for π, a masked-integer loop, and a dictionary word-count — all three runtimes produce byte-identical output, and the speed spread is enormous:
+There are really two kinds of "faster Python," and they need separate tables. The first kind is a **drop-in runtime**: it runs your existing, unmodified `.py` file. I ran three small pure-Python programs — recursive `fib` (call overhead), a Mandelbrot escape-count (float-heavy nested loops), and a masked-integer loop — across five drop-in runtimes at three sizes each. Every one produced byte-identical output. Here are the large-size wall times (best of two):
 
-| Benchmark | CPython 3.13 | PyPy 7.3.23 | pon | PyPy vs CPython |
-| --- | --- | --- | --- | --- |
-| `fib(30)` (recursive calls) | 0.097 s | 0.045 s | 1.51 s | 2.2× faster |
-| π via Leibniz, 5M terms (float) | 0.298 s | 0.051 s | 1.83 s | 5.8× faster |
-| masked int loop, 10M | 1.081 s | 0.037 s | 7.34 s | 29× faster |
-| dict word-count, 1M | 0.159 s | 0.045 s | 2.06 s | 3.6× faster |
+| Program (large size) | CPython 3.13 | CPython 3.14 | 3.14t (no-GIL) | PyPy 7.3.23 | pon |
+| --- | --- | --- | --- | --- | --- |
+| `fib(34)` (recursive calls) | 0.574 s | 0.464 s | 0.505 s | **0.085 s** | 10.56 s |
+| Mandelbrot 500² (float) | 1.637 s | 1.509 s | 1.972 s | **0.095 s** | *(did not finish)* |
+| int loop, 30M | 2.186 s | 2.332 s | 2.194 s | **0.065 s** | 9.14 s |
 
-PyPy is faster than CPython on every one, and on the tight loop it isn't close. And the loop understates it, because PyPy's tracing JIT needs a moment to warm up; the longer the loop runs, the more the compiled machine code dominates:
+Read across each row and most of the story is already there. **CPython 3.14 is a little faster than 3.13** — ~10–20% on the call- and float-heavy tasks — free, with no code change. The **free-threaded 3.14t build costs ~10–30% single-threaded** (worst on Mandelbrot); that's the price of removing the GIL, and I'll come back to what you get for it. **PyPy is in another league** — 7×, 17×, 34× faster on these three — and its margin *grows* with the workload, because its tracing JIT compiles the hot loop to native code once and then barely moves:
 
 | Same loop, growing N | CPython 3.13 | PyPy 7.3.23 | speedup |
 | --- | --- | --- | --- |
@@ -30,7 +31,7 @@ PyPy is faster than CPython on every one, and on the tight loop it isn't close. 
 | 10M | 1.110 s | 0.038 s | 29× |
 | 100M | 11.92 s | 0.174 s | **69×** |
 
-CPython scales linearly with the work; PyPy compiles the loop body to native code once and then barely moves. At a hundred million iterations it is sixty-nine times faster. (pon, the third column above, is the newcomer — 6–15× *slower* than CPython today; more on why that's still interesting later.)
+CPython scales linearly with the work; PyPy flattens out. At a hundred million iterations it is sixty-nine times faster — on the *same source*, no annotations, no rewrite. (**pon**, the from-scratch newcomer in the last column, is the slow one — 15–30× behind, and it never even finished the float-heavy Mandelbrot; more on why that's still interesting later.)
 
 So the question isn't academic. There is a mature, open-source, largely-compatible Python that runs pure-Python code several times faster, and often much more. **Why is essentially everyone still on CPython?** The answer isn't one thing; it's a set of walls that every alternative hits in a different order.
 
@@ -65,7 +66,7 @@ If emulating the C-API is the problem, why not start *from* CPython, keep perfec
 
 The pattern here is brutal and clear: a CPython fork inherits perfect compatibility but also inherits an impossible job — staying current with a fast-moving upstream while justifying the switching cost of a non-standard interpreter. The moment CPython started improving itself (next section), the ~10–30% these forks offered stopped being worth the friction. Their best ideas didn't die; they got absorbed.
 
-### 3. Compile Python instead of interpreting it — Cython, mypyc, Numba, Nuitka, Codon
+### 3. Compile Python instead of interpreting it — Cython, mypyc, Numba, Nuitka, Codon, post-py
 
 A different bargain: give up on being a drop-in *runtime* and instead compile Python (or something close to it) to native code. These aren't really CPython competitors — most of them run *with* CPython — but they're how people actually get speed today, so they matter.
 
@@ -76,10 +77,30 @@ A different bargain: give up on being a drop-in *runtime* and instead compile Py
 | **Numba** | `@njit` numeric functions, LLVM JIT | yes | 10–100× on array math | only a narrow numeric subset of Python |
 | **Nuitka** | whole program → C, bundles CPython | yes | ~1–2× | it's a packager first; speed is a side effect |
 | **Codon** | a Python-*like* dialect → native, own runtime | **no** | 10–100× | not CPython-compatible; you rewrite to its subset |
+| **post-py** | typed Python *subset* → C99 → shared lib / CPython ext | no (RAII, no GC) | ~60–70× on typed kernels | v0.3 alpha; subset only, no dynamic Python |
 
 The scientific stack is quietly built on this tier — Cython underpins NumPy, SciPy, pandas and scikit-learn; mypyc compiles mypy itself and Black. But look at the "catch" column: every one of them buys speed by *removing dynamism*. Cython and mypyc want type annotations; Numba only handles numeric kernels; Codon is a separate language that happens to look like Python and, by cutting the cord to the CPython runtime entirely, also cuts itself off from the C-extension ecosystem. (Codon, worth noting, relicensed from a restrictive source-available license to Apache-2.0 in early 2025.) Nuitka keeps full compatibility precisely by *not* trying to be much faster — it bundles CPython and mostly helps you ship a single binary.
 
 That trade — dynamism for speed — is the whole game, and it's why none of these is "faster Python" in the general sense. They're faster *subsets* of Python.
+
+I benchmarked this tier too, holding all of them to one shared numeric kernel — the same Leibniz π loop — each in its own environment, timing the compiled kernel's compute:
+
+| Leibniz π kernel (compute only) | 5M | 20M | 50M | vs CPython |
+| --- | --- | --- | --- | --- |
+| CPython 3.13 (interpreted) | 359 ms | 1356 ms | 3379 ms | 1× |
+| mypyc (plain type hints) | 11.8 ms | 44.8 ms | 112 ms | ~30× |
+| Numba (`@njit`) | 5.1 ms | 19.4 ms | 56 ms | ~65× |
+| Cython (`cdef` types) | 5.0 ms | 19.4 ms | 49 ms | ~70× |
+| Codon (native binary)† | — | — | ~52 ms | ~65× |
+| **post-py** (`postpyc build`) | **4.7 ms** | **18.8 ms** | **47 ms** | **~70×** |
+
+*† Codon compiles a standalone binary; its ~9 ms native process startup is excluded here so the compute is comparable. Every tool's output was byte-identical to CPython's.*
+
+The takeaway isn't a winner — it's the *convergence*. Once a numeric kernel is compiled to native code, which tool you used barely matters; they all land within a small factor of each other and of hand-written C. mypyc is the instructive outlier: it asks the least of you (ordinary type hints, no `cdef` or decorator) and returns the least (~30× instead of ~70×), because it preserves more of Python's object semantics. That gradient *is* the lesson — the more you let the compiler assume, the closer to C you get.
+
+The newest row is the interesting one. **post-py** — "Performance-Optimized Statically Typed Python," from **Travis Oliphant** (creator of NumPy and Numba), whose first alpha (`pip install postpyc`, v0.3.0) hit PyPI the day before I wrote this — is another entry in this tier with an unusual pitch. It is *spec-first*: instead of shipping yet another compiler with its own informal subset, it defines a **normative specification** for a compilable Python subset and treats the compiler as a reference implementation. The compiler emits **C99** (no LLVM), and — unlike anything else here — the compiled object model uses **single-owner RAII with no garbage collector and no GIL**, touching reference counting only at the CPython boundary. A conforming file is still valid Python you can run under CPython; stray outside the subset and the compiler rejects it with a diagnostic rather than silently changing behavior. On my one-kernel test it matched Cython and edged out Numba — but it's v0.3 alpha with a draft spec and essentially no ecosystem, and it is explicitly aimed at *replacing C and Rust for extension modules*, not at running your application. It's the same bargain as the rest of this tier — types and a subset, in exchange for C speed — dressed, ambitiously, as a standard.
+
+The most lavishly funded bet in this whole space isn't really a Python compiler at all. **Mojo**, from Chris Lattner (creator of LLVM and Swift) and his company Modular, is a *new language* designed as a Python superset — Pythonic syntax with C++/Rust-class performance through MLIR, aimed squarely at AI and GPU workloads. It reached a feature-complete [1.0 beta in May 2026](https://www.modular.com/blog/modular-26-3-mojo-1-0-beta-max-video-gen-and-more) and is the highest-profile attempt yet to build a faster Python-family language. It is also a cautionary tale in progress: in June 2026 Modular [agreed to be acquired by **Qualcomm**](https://www.modular.com/blog/qualcomm-to-acquire-modular) for about $3.9 billion — a deal transparently about Modular's cross-vendor inference stack (MAX) and the war on Nvidia's CUDA moat, not about Mojo as a general-purpose language. Mojo was never a drop-in for CPython to begin with (it's a separate language you rewrite into, with its own young ecosystem), and now even its independent direction depends on a chipmaker's roadmap. When the best-resourced swing at "Python but fast" is, at best, *adjacent* to Python — and subject to whoever ends up owning it — that tells you something about the gravity well.
 
 ### 4. Put Python on another platform — Jython, IronPython, RustPython
 
@@ -111,7 +132,16 @@ Step back from the individual projects and the walls repeat. In rough order of h
 
 **6. CPython is a moving target that improves itself.** The "Faster CPython" project brought the 3.11 specializing adaptive interpreter ([PEP 659](https://peps.python.org/pep-0659/)) and roughly a 1.4–1.5× cumulative speedup from 3.10 to 3.14 — quietly erasing the margin the CPython forks were selling. A copy-and-patch JIT ([PEP 744](https://peps.python.org/pep-0744/)) shipped experimentally in 3.13, and free-threaded, no-GIL CPython ([PEP 703](https://peps.python.org/pep-0703/)) became officially supported (though still opt-in) in 3.14. Why bet on someone else's runtime when the default one is closing the gap for free?
 
-There's a real twist on that last point, though. In May 2025, Microsoft **disbanded the Faster CPython team** — Mark Shannon, Eric Snow, and others were laid off — and the work has since become community-led. The 3.13/3.14 JIT was, by the core devs' own admission, often *slower* than the interpreter; only in 3.15 (in beta as I write this) is it finally landing modest, real wins, with a fresh roadmap in [PEP 836](https://peps.python.org/pep-0836/). So even CPython's self-improvement is more fragile and under-resourced than it looks. And it *still* wins — which tells you how deep the other moats run.
+That free-threading line is worth seeing measured, because it's the parallelism story people used to leave CPython *for*. Here is the same CPU-bound function run across four threads, GIL versus no-GIL:
+
+| 4× CPU-bound work | 1 thread | 4 threads |
+| --- | --- | --- |
+| CPython 3.14 (GIL) | 0.56 s | 2.30 s |
+| CPython 3.14t (no-GIL) | 0.63 s | **0.71 s** |
+
+Under the GIL, four threads of Python compute take four times as long — they can't run in parallel, so they queue. Under free-threading they finish in roughly the time of one, for about a 12% single-threaded tax. Real multicore Python, in the *default* interpreter rather than a fork or a C extension — that alone removes one of the historical reasons to leave.
+
+There's a real twist on that last point, though. In May 2025, Microsoft **disbanded the Faster CPython team** — Mark Shannon, Eric Snow, and others were laid off — and the work has since become community-led. The 3.13/3.14 JIT was, by the core devs' own admission, often *slower* than the interpreter; only in 3.15 (in beta as I write this) is it finally landing modest, real wins. A Steering-Council-blessed roadmap, [PEP 836](https://peps.python.org/pep-0836/), now shepherds the built-in JIT on a time-boxed leash — targeting roughly 5% by 3.15 and ~10% by 3.16 once it works alongside free-threading, with a hard bar it must clear by 3.17 or be reconsidered for removal. That the *default* interpreter is growing its own JIT is the most consequential development here — but even it is more fragile and under-resourced than it looks. And it *still* wins — which tells you how deep the other moats run.
 
 **7. Inertia is a feature.** CPython is the default everywhere: every OS, every cloud image, every tutorial, every Stack Overflow answer. The effort to switch runtimes is real and immediate; the payoff is speculative and workload-specific. That math rarely closes.
 
