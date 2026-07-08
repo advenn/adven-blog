@@ -1,23 +1,26 @@
-# Deploying to Cloudflare Pages
+# Deploying to Cloudflare (Workers Builds)
 
 Plain Hugo site at the repo root. PaperMod is **vendored** under `themes/` as
-normal files (no git submodule). Hosted on **Cloudflare Pages** via Git.
+normal files (no git submodule). Hosted on **Cloudflare Workers** (static
+assets) via Git — the project deploys as a Worker named `bek-kurbonov`.
 
 ## Build configuration (Cloudflare dashboard)
 
 Project → **Settings** → **Build configuration**:
 
-| Setting                | Value                |
-| ---------------------- | -------------------- |
-| Build command          | `hugo --gc --minify` |
-| Build output directory | `public`             |
-| **Deploy command**     | **(leave EMPTY)**    |
+| Setting                | Value                 |
+| ---------------------- | --------------------- |
+| Build command          | `hugo --gc --minify`  |
+| Build output directory | `public`              |
+| **Deploy command**     | `npx wrangler deploy` |
 
-> ⚠️ The deploy command **must be empty**. Pages auto-uploads the output
-> directory after the build. If it's set to `npx wrangler deploy`, the deploy
-> fails with *"Missing entry-point to Worker script or to assets directory"* —
-> that's a Workers command, not a Pages one. Do **not** commit a `wrangler.toml`
-> either; Cloudflare will re-suggest that broken deploy command if it sees one.
+> ⚠️ This deploy uses Cloudflare **Workers static assets**, which requires a
+> committed [`wrangler.jsonc`](wrangler.jsonc) at the repo root naming the
+> Worker (`bek-kurbonov`) and its assets directory (`public`). Without it,
+> `npx wrangler deploy` refuses to overwrite the existing Worker
+> (*"A Worker named 'bek-kurbonov' already exists … could not confirm that it
+> should update that Worker"*) and the deploy fails. Do **not** delete
+> `wrangler.jsonc`.
 
 ## Environment variables (optional but recommended)
 
@@ -53,7 +56,7 @@ relative links.
 
 ```bash
 hugo --gc --minify
-npx wrangler pages deploy public --project-name <your-pages-project-name>
+npx wrangler deploy      # reads wrangler.jsonc; updates the bek-kurbonov Worker
 ```
 
 ## Local preview

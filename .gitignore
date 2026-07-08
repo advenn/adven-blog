@@ -6,3 +6,6 @@
 # Editors / OS
 .idea/
 .DS_Store
+
+# Wrangler local state (keep wrangler.jsonc committed; ignore only local state)
+.wrangler/

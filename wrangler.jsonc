@@ -1,0 +1,15 @@
+{
+  // Static Hugo site served via Cloudflare Workers static assets.
+  // Committing this config is what lets `npx wrangler deploy` (the CF build's
+  // deploy command) update the existing "bek-kurbonov" Worker instead of
+  // refusing because it can't confirm the target. `public/` is Hugo's output.
+  "name": "bek-kurbonov",
+  "compatibility_date": "2026-07-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "public"
+  }
+}
