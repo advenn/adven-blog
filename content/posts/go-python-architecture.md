@@ -3,6 +3,7 @@ date: '2025-11-24T22:00:00+01:00'
 draft: false
 title: 'When You Can''t Find the Bug: Architecting Around Production Issues'
 tags: ['go', 'python','data-processing', 'data-pipeline']
+categories: ['Performance Optimization in Python']
 ---
 
 *This is Part 2 of a series. Read [Part 1: Pandas vs Polars in Production - Performance Comparison](../pandas-vs-polars-in-production/) for the background on the Polars migration.*

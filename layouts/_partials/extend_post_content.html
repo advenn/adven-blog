@@ -1,0 +1,25 @@
+{{- /* Series box: for a post grouped under a category, list the other posts in
+       that series (in date order) at the end of the article. This is a reading
+       aid on the posts themselves — not a site-wide nav section. */ -}}
+{{- with .Params.categories -}}
+{{- range . -}}
+{{- $series := . -}}
+{{- $members := where (where site.RegularPages "Section" "posts") "Params.categories" "intersect" (slice $series) -}}
+{{- if gt (len $members) 1 -}}
+<div style="border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.2rem;margin:2rem 0;background:var(--entry);">
+  <div style="font-weight:600;margin-bottom:0.5rem;">📚 Series — {{ $series }}</div>
+  <ol style="margin:0;padding-left:1.25rem;">
+    {{- range (sort $members "Date" "asc") -}}
+    <li style="margin:0.15rem 0;">
+      {{- if eq .Permalink $.Permalink -}}
+      <span style="opacity:0.7;">{{ .Title }} <em>(you are here)</em></span>
+      {{- else -}}
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{- end -}}
+    </li>
+    {{- end -}}
+  </ol>
+</div>
+{{- end -}}
+{{- end -}}
+{{- end -}}

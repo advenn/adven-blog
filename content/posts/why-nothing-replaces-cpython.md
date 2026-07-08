@@ -3,6 +3,7 @@ date: '2026-07-08T00:10:00+02:00'
 draft: false
 title: 'Why Nothing Has Replaced CPython: A 2026 Tour of Python Runtimes'
 tags: ['python', 'runtimes', 'pypy', 'cpython', 'jit', 'performance']
+categories: ['Performance Optimization in Python']
 ShowToc: true
 TocOpen: true
 ---

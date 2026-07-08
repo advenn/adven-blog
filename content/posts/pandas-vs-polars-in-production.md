@@ -3,6 +3,7 @@ date: '2025-11-23T23:02:39+01:00'
 draft: false
 title: 'Pandas vs Polars in Production: Performance Comparison'
 tags: ['pandas', 'polars', 'data-processing', 'data-pipeline']
+categories: ['Performance Optimization in Python']
 ---
 
 When performance bottlenecks started affecting my production data pipeline, I decided to test whether Polars could deliver on its performance promises. This is what I learned from migrating a real production workload from Pandas to Polars.

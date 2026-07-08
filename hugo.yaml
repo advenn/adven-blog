@@ -17,4 +17,4 @@ theme: [ "PaperMod" ]
 
 params:
   ShowReadingTime: true
-  ShowShareButtons: true
+  ShowShareButtons: false
