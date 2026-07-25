@@ -26,9 +26,8 @@ params:
     repo: advenn/adven-blog
     repoId: R_kgDOTQhqyQ
     category: Announcements
-    # Fill from https://giscus.app after enabling Discussions on the repo and
-    # installing the giscus app. Until then the comments partial renders nothing.
-    categoryId: ""
+    # From https://giscus.app. The comments partial renders nothing while empty.
+    categoryId: "DIC_kwDOTQhqyc4DB9r_"
     mapping: pathname
     reactionsEnabled: "1"
     inputPosition: bottom
