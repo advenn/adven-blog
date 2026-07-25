@@ -18,3 +18,18 @@ theme: [ "PaperMod" ]
 params:
   ShowReadingTime: true
   ShowShareButtons: false
+
+  # Comments on every post. Opt a single post out with `comments: false` in its
+  # front matter. Rendered by layouts/_partials/comments.html (giscus).
+  comments: true
+  giscus:
+    repo: advenn/adven-blog
+    repoId: R_kgDOTQhqyQ
+    category: Announcements
+    # Fill from https://giscus.app after enabling Discussions on the repo and
+    # installing the giscus app. Until then the comments partial renders nothing.
+    categoryId: ""
+    mapping: pathname
+    reactionsEnabled: "1"
+    inputPosition: bottom
+    lang: en

@@ -1,0 +1,61 @@
+{{- /* Giscus comments, backed by GitHub Discussions on the blog's own repo.
+       PaperMod's single.html renders this partial whenever the `comments`
+       param is true (set site-wide in hugo.yaml; a post can opt out with
+       `comments: false` in its front matter).
+
+       Config lives under `params.giscus`. `categoryId` is only obtainable from
+       https://giscus.app after Discussions are enabled on the repo, so until
+       it's filled in this partial renders nothing rather than shipping a
+       broken widget to readers. */ -}}
+{{- $g := site.Params.giscus -}}
+{{- if and $g $g.repoId $g.categoryId -}}
+{{- $cfg := dict
+      "data-repo"              $g.repo
+      "data-repo-id"           $g.repoId
+      "data-category"          $g.category
+      "data-category-id"       $g.categoryId
+      "data-mapping"           ($g.mapping          | default "pathname")
+      "data-strict"            "1"
+      "data-reactions-enabled" ($g.reactionsEnabled | default "1")
+      "data-emit-metadata"     "0"
+      "data-input-position"    ($g.inputPosition    | default "bottom")
+      "data-lang"              ($g.lang             | default "en")
+      "data-loading"           "lazy"
+-}}
+<div id="giscus-comments" style="margin-top:2.5rem;"></div>
+<script>
+    (function () {
+        // safeJS: without it Hugo's contextual escaping emits the JSON as a
+        // quoted JS *string* rather than an object literal.
+        var cfg = {{ $cfg | jsonify | safeJS }};
+
+        // PaperMod's head script always resolves html[data-theme] to a concrete
+        // "dark" or "light" before body renders, so this is safe to read here.
+        function currentTheme() {
+            return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+        }
+
+        var s = document.createElement("script");
+        s.src = "https://giscus.app/client.js";
+        s.async = true;
+        s.crossOrigin = "anonymous";
+        Object.keys(cfg).forEach(function (k) { s.setAttribute(k, cfg[k]); });
+        s.setAttribute("data-theme", currentTheme());
+        document.getElementById("giscus-comments").appendChild(s);
+
+        // Follow the theme toggle: giscus lives in a cross-origin iframe, so the
+        // only way to restyle it after load is postMessage.
+        new MutationObserver(function () {
+            var frame = document.querySelector("iframe.giscus-frame");
+            if (!frame) return;
+            frame.contentWindow.postMessage(
+                { giscus: { setConfig: { theme: currentTheme() } } },
+                "https://giscus.app"
+            );
+        }).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+        });
+    })();
+</script>
+{{- end -}}
