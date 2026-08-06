@@ -8,4 +8,4 @@ Use modern cloud based solutions they said. it is the best solution they said)
 
 I am not against it, but it makes you dependant to some provider. and if it goes dark, you go dark. 
 
-![img.png](../../static/photos/github-actions-down.png)
+![img.png](/photos/github-actions-down.png)
