@@ -4,4 +4,8 @@ draft: false
 title: 'Outsource everything to cloud providers and suffer'
 ---
 
-![img.png](img.png)
+Use modern cloud based solutions they said. it is the best solution they said)
+
+I am not against it, but it makes you dependant to some provider. and if it goes dark, you go dark. 
+
+![img.png](../../static/photos/github-actions-down.png)
