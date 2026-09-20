@@ -61,6 +61,9 @@ params:
     - name: linkedin
       title: LinkedIn
       url: "https://www.linkedin.com/in/bek-kurbonov/"
+    - name: telegram
+      title: Telegram channel
+      url: "https://t.me/code_journeys"
     - name: email
       title: Email
       url: "mailto:qurbonovasadbek@gmail.com"

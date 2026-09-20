@@ -74,5 +74,6 @@ I'm learning Rust.
 
 - GitHub — [github.com/advenn](https://github.com/advenn)
 - LinkedIn — [linkedin.com/in/bek-kurbonov](https://www.linkedin.com/in/bek-kurbonov/)
+- Telegram — [t.me/code_journeys](https://t.me/code_journeys)
 - Email — [qurbonovasadbek@gmail.com](mailto:qurbonovasadbek@gmail.com)
 - [Résumé (PDF)](/files/Kurbonov-Asadbek-CV.pdf)
