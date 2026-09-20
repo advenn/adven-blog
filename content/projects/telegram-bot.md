@@ -4,7 +4,6 @@ tagline: "Webhook handling to data storage, end to end"
 status: shipped
 state: "Shipped"
 weight: 4
-date: 2025-06-01
 language: "Python"
 metric: "100K+ users"
 summary: >-

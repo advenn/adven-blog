@@ -4,7 +4,6 @@ tagline: "Go orchestrator, short-lived Python workers"
 status: shipped
 state: "In production"
 weight: 3
-date: 2026-01-15
 language: "Go · Python · NATS"
 metric: "OOM restarts → zero"
 summary: >-

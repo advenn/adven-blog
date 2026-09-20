@@ -34,9 +34,6 @@
     {{- else }}{{ .Content }}{{ end }}
   </div>
 
-  <footer class="post-footer">
-    {{- partial "post_nav_links.html" . }}
-  </footer>
 
   {{- if (.Param "comments") }}
   {{- partial "comments.html" . }}
