@@ -43,8 +43,8 @@ of building — and sharpened it professionally at [MyTaxi.uz](https://mytaxi.uz
 
 Since August 2026 I'm working as Senior Software Developer (Golang) at Grid Dynamics Poland office.
 
-I'm interested in high load distributed apps. logd and ursus are my attempts to create platforms that are fast and
-efficient.
+I'm passionate about high load distributed apps. I use golang, and learning rust. For now, logd and ursus are my
+attempts to create platforms that are fast and efficient.
 
 ## Technical stack
 
