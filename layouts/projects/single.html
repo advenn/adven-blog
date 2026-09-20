@@ -1,0 +1,46 @@
+{{- define "main" }}
+
+<article class="post-single project-single">
+  <header class="post-header">
+    {{- partial "breadcrumbs.html" . }}
+    <h1 class="post-title entry-hint-parent">{{ .Title }}</h1>
+    {{- with .Params.tagline }}<div class="post-description">{{ . }}</div>{{ end }}
+
+    <div class="project-meta">
+      {{- with .Params.state }}<span class="pill">{{ . }}</span>{{ end }}
+      {{- with .Params.language }}<span class="meta-item">{{ . }}</span>{{ end }}
+      {{- with .Params.metric }}<span class="meta-item">{{ . }}</span>{{ end }}
+    </div>
+
+    {{- if or .Params.repo .Params.docs }}
+    <div class="project-actions">
+      {{- with .Params.repo }}<a class="action-btn" href="{{ . }}" rel="noopener" target="_blank">Source</a>{{ end }}
+      {{- with .Params.docs }}<a class="action-btn" href="{{ . }}" rel="noopener" target="_blank">Documentation</a>{{ end }}
+    </div>
+    {{- end }}
+
+    {{- with .Params.install }}
+    <div class="project-install"><code>{{ . }}</code></div>
+    {{- end }}
+  </header>
+
+  {{- if (.Param "ShowToc") }}
+  {{- partial "toc.html" . }}
+  {{- end }}
+
+  <div class="post-content md-content">
+    {{- if not (.Param "disableAnchoredHeadings") }}
+    {{- partial "anchored_headings.html" .Content -}}
+    {{- else }}{{ .Content }}{{ end }}
+  </div>
+
+  <footer class="post-footer">
+    {{- partial "post_nav_links.html" . }}
+  </footer>
+
+  {{- if (.Param "comments") }}
+  {{- partial "comments.html" . }}
+  {{- end }}
+</article>
+
+{{- end }}

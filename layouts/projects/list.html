@@ -1,0 +1,68 @@
+{{- define "main" }}
+
+{{- $active  := sort (where .RegularPages "Params.status" "active")  "Weight" }}
+{{- $shipped := sort (where .RegularPages "Params.status" "shipped") "Weight" }}
+
+<header class="page-header">
+  {{- partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{- with .Description }}<div class="post-description">{{ . | markdownify }}</div>{{ end }}
+</header>
+
+{{- with .Content }}
+<div class="post-content md-content">{{ . }}</div>
+{{- end }}
+
+<div class="home">
+
+  {{- with $active }}
+  <section class="home-section">
+    <div class="section-head"><h2 class="section-title">Active</h2></div>
+    <div class="project-grid">
+      {{- range . }}
+      <article class="project-card">
+        <header class="project-card-head">
+          <h3 class="project-name"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{- with .Params.state }}<span class="pill">{{ . }}</span>{{ end }}
+        </header>
+        {{- with .Params.tagline }}<p class="project-tagline">{{ . }}</p>{{ end }}
+        {{- with .Params.summary }}<p class="project-summary">{{ $.RenderString (dict "display" "inline") . }}</p>{{ end }}
+        {{- with .Params.facts }}
+        <ul class="facts">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>
+        {{- end }}
+        <footer class="project-links">
+          <a href="{{ .RelPermalink }}">Details</a>
+          {{- with .Params.repo }}<a href="{{ . }}" rel="noopener" target="_blank">Source</a>{{ end }}
+          {{- with .Params.docs }}<a href="{{ . }}" rel="noopener" target="_blank">Docs</a>{{ end }}
+        </footer>
+      </article>
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+  {{- with $shipped }}
+  <section class="home-section">
+    <div class="section-head"><h2 class="section-title">Shipped</h2></div>
+    <div class="project-grid">
+      {{- range . }}
+      <article class="project-card project-card-quiet">
+        <header class="project-card-head">
+          <h3 class="project-name"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{- with .Params.metric }}<span class="pill pill-quiet">{{ . }}</span>{{ end }}
+        </header>
+        {{- with .Params.tagline }}<p class="project-tagline">{{ . }}</p>{{ end }}
+        {{- with .Params.summary }}<p class="project-summary">{{ $.RenderString (dict "display" "inline") . }}</p>{{ end }}
+        <footer class="project-links">
+          <a href="{{ .RelPermalink }}">Details</a>
+          {{- with .Params.repo }}<a href="{{ . }}" rel="noopener" target="_blank">Source</a>{{ end }}
+        </footer>
+      </article>
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+</div>
+
+{{- end }}

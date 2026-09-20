@@ -5,7 +5,7 @@
 baseURL: /
 relativeURLs: true
 canonifyURLs: false
-languageCode: en-us
+locale: en-us
 title: Asadbek Kurbonov
 pagination:
   pagerSize: 10
@@ -15,9 +15,61 @@ caches:
 
 theme: [ "PaperMod" ]
 
+# The home page is layouts/index.html (a landing page), not a post list.
+# mainSections still governs RSS and the /posts/ listing.
+mainSections:
+  - posts
+
+menu:
+  main:
+    - name: Projects
+      url: /projects/
+      weight: 1
+    - name: Writing
+      url: /posts/
+      weight: 2
+    - name: About
+      url: /about/
+      weight: 3
+
 params:
+  description: >-
+    Asadbek Kurbonov — Go engineer in Warsaw. Building ursus, a dataframe
+    library for Go, and logd, a log storage engine with typed-range indexing.
+  keywords: [ Go, Golang, dataframe, ursus, logd, log storage, data engineering ]
+  author: Asadbek Kurbonov
+
   ShowReadingTime: true
   ShowShareButtons: false
+  ShowBreadCrumbs: true
+  ShowPostNavLinks: true
+  ShowCodeCopyButtons: true
+  ShowToc: true
+  TocOpen: false
+
+  # Home page copy lives in content/_index.md front matter; these are the
+  # identity bits the landing page and the footer share.
+  role: Senior Software Developer (Golang)
+  employer: Grid Dynamics
+  location: Warsaw, Poland
+  study: MSc Computer Science, PJAIT
+
+  socialIcons:
+    - name: github
+      title: GitHub
+      url: "https://github.com/advenn"
+    - name: linkedin
+      title: LinkedIn
+      url: "https://www.linkedin.com/in/bek-kurbonov/"
+    - name: email
+      title: Email
+      url: "mailto:qurbonovasadbek@gmail.com"
+    - name: cv
+      title: Résumé (PDF)
+      url: "/files/Kurbonov-Asadbek-CV.pdf"
+    - name: rss
+      title: RSS
+      url: "/index.xml"
 
   # Comments on every post. Opt a single post out with `comments: false` in its
   # front matter. Rendered by layouts/_partials/comments.html (giscus).

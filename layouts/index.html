@@ -1,0 +1,107 @@
+{{- define "main" }}
+
+{{- $projects := where site.RegularPages "Section" "projects" }}
+{{- $active   := sort (where $projects "Params.status" "active")  "Weight" }}
+{{- $shipped  := sort (where $projects "Params.status" "shipped") "Weight" }}
+{{- $posts    := first 3 (where site.RegularPages "Section" "posts") }}
+{{- $writing  := site.GetPage "/posts" }}
+{{- $projIdx  := site.GetPage "/projects" }}
+
+<div class="home">
+
+  <section class="hero">
+    <h1 class="hero-name">{{ .Title }}</h1>
+    {{- with .Params.headline }}
+    <p class="hero-headline">{{ . }}</p>
+    {{- end }}
+    <p class="hero-meta">
+      {{- with site.Params.role }}<span>{{ . }}{{ with site.Params.employer }}, {{ . }}{{ end }}</span>{{ end }}
+      {{- with site.Params.study }}<span>{{ . }}</span>{{ end }}
+      {{- with site.Params.location }}<span>{{ . }}</span>{{ end }}
+    </p>
+    {{- with .Content }}
+    <div class="hero-intro">{{ . }}</div>
+    {{- end }}
+  </section>
+
+  {{- with $active }}
+  <section class="home-section">
+    <div class="section-head">
+      <h2 class="section-title">Building now</h2>
+      {{- with $projIdx }}<a class="section-more" href="{{ .RelPermalink }}">All projects &rarr;</a>{{ end }}
+    </div>
+    <div class="project-grid">
+      {{- range . }}
+      <article class="project-card">
+        <header class="project-card-head">
+          <h3 class="project-name"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{- with .Params.state }}<span class="pill">{{ . }}</span>{{ end }}
+        </header>
+        {{- with .Params.tagline }}<p class="project-tagline">{{ . }}</p>{{ end }}
+        {{- with .Params.summary }}<p class="project-summary">{{ $.RenderString (dict "display" "inline") . }}</p>{{ end }}
+        {{- with .Params.facts }}
+        <ul class="facts">
+          {{- range . }}<li>{{ . }}</li>{{ end }}
+        </ul>
+        {{- end }}
+        {{- with .Params.install }}<code class="install">{{ . }}</code>{{ end }}
+        <footer class="project-links">
+          <a href="{{ .RelPermalink }}">Details</a>
+          {{- with .Params.repo }}<a href="{{ . }}" rel="noopener" target="_blank">Source</a>{{ end }}
+          {{- with .Params.docs }}<a href="{{ . }}" rel="noopener" target="_blank">Docs</a>{{ end }}
+        </footer>
+      </article>
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+  {{- with $shipped }}
+  <section class="home-section">
+    <div class="section-head">
+      <h2 class="section-title">Shipped</h2>
+    </div>
+    <ul class="shipped-list">
+      {{- range . }}
+      <li class="shipped-item">
+        <a class="shipped-link" href="{{ .RelPermalink }}">
+          <span class="shipped-name">{{ .Title }}</span>
+          {{- with .Params.tagline }}<span class="shipped-tagline">{{ . }}</span>{{ end }}
+          {{- with .Params.metric }}<span class="shipped-metric">{{ . }}</span>{{ end }}
+        </a>
+      </li>
+      {{- end }}
+    </ul>
+  </section>
+  {{- end }}
+
+  {{- with $posts }}
+  <section class="home-section">
+    <div class="section-head">
+      <h2 class="section-title">Writing</h2>
+      {{- with $writing }}<a class="section-more" href="{{ .RelPermalink }}">All posts &rarr;</a>{{ end }}
+    </div>
+    <ul class="writing-list">
+      {{- range . }}
+      <li class="writing-item">
+        <a class="writing-link" href="{{ .RelPermalink }}">
+          <span class="writing-title">{{ .Title }}</span>
+          <time class="writing-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
+        </a>
+        <p class="writing-summary">{{ .Summary | plainify | truncate 150 }}</p>
+      </li>
+      {{- end }}
+    </ul>
+  </section>
+  {{- end }}
+
+  <section class="home-section home-contact">
+    <div class="section-head">
+      <h2 class="section-title">Elsewhere</h2>
+    </div>
+    {{- partial "social_icons.html" (dict "align" "") }}
+  </section>
+
+</div>
+
+{{- end }}
